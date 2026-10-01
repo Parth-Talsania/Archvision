@@ -6,6 +6,7 @@
 
 Upload a floor plan image or a property brochure PDF. ArchVision finds every room, reads its label and dimensions, and returns clean JSON with geometry and confidence scores. Results open in an interactive web dashboard.
 
+[![CI](https://github.com/Parth-Talsania/Archvision/actions/workflows/ci.yml/badge.svg)](https://github.com/Parth-Talsania/Archvision/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)
 ![YOLOv8](https://img.shields.io/badge/YOLOv8--Seg-Ultralytics-00FFFF)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
