@@ -3,6 +3,9 @@
 The ML pipeline is replaced with a fake so these run in seconds; the real
 pipeline is covered by the parsing/geometry tests and by running the app.
 """
+import threading
+import time
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -67,6 +70,17 @@ def upload(client, headers, filename="plan.png", content=PNG_BYTES):
     return client.post("/api/analyze", files={"file": (filename, content, "image/png")}, headers=headers)
 
 
+def wait_for_job(client, headers, job_id, timeout=10.0):
+    """Analysis runs in a background thread; poll until it finishes."""
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        job = client.get(f"/api/analyses/{job_id}", headers=headers).json()
+        if job["status"] != "processing":
+            return job
+        time.sleep(0.05)
+    raise AssertionError(f"job {job_id} still processing after {timeout}s")
+
+
 # --- health & auth ---------------------------------------------------------
 
 def test_health(client):
@@ -126,11 +140,11 @@ def test_image_analysis_full_lifecycle(client):
 
     r = upload(client, headers)
     assert r.status_code == 201, r.text
-    job = r.json()
+    job_id = r.json()["id"]
+    job = wait_for_job(client, headers, job_id)
     assert job["status"] == "completed"
     assert job["total_rooms"] == 2
     assert job["rooms_with_labels"] == 2
-    job_id = job["id"]
 
     listing = client.get("/api/analyses", headers=headers).json()
     assert listing["total"] == 1
@@ -162,6 +176,7 @@ def test_users_cannot_see_each_others_analyses(client):
     alice = register(client, "alice@example.com")
     bob = register(client, "bob@example.com")
     job_id = upload(client, alice).json()["id"]
+    wait_for_job(client, alice, job_id)
 
     assert client.get(f"/api/analyses/{job_id}", headers=bob).status_code == 404
     assert client.get(f"/api/analyses/{job_id}/download", headers=bob).status_code == 404
@@ -185,10 +200,39 @@ def test_pipeline_error_marks_job_failed(client, monkeypatch):
     monkeypatch.setattr(pipeline_service, "analyze_image", broken)
     headers = register(client)
 
-    job = upload(client, headers).json()
+    job = wait_for_job(client, headers, upload(client, headers).json()["id"])
     assert job["status"] == "failed"
     assert "model exploded" in job["error_message"]
     assert client.get("/api/dashboard", headers=headers).json()["failed_analyses"] == 1
+
+
+def test_upload_returns_before_analysis_finishes(client, monkeypatch):
+    release = threading.Event()
+
+    def slow(image_path, job_id):
+        release.wait(timeout=10)
+        return fake_analyze_image(image_path, job_id)
+
+    monkeypatch.setattr(pipeline_service, "analyze_image", slow)
+    headers = register(client)
+
+    r = upload(client, headers)  # would hang here if analysis ran in the request
+    assert r.status_code == 201
+    assert r.json()["status"] == "processing"
+    release.set()
+    assert wait_for_job(client, headers, r.json()["id"])["status"] == "completed"
+
+
+def test_progress_stream_reports_completion(client):
+    r = client.post("/api/auth/register", json={"email": "sse@example.com", "password": "secret123", "full_name": "S"})
+    token = r.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    job_id = upload(client, headers).json()["id"]
+    wait_for_job(client, headers, job_id)
+
+    stream = client.get(f"/api/analyses/{job_id}/progress", params={"token": token})
+    assert stream.status_code == 200
+    assert '"step": "completed"' in stream.text
 
 
 # --- file serving ----------------------------------------------------------

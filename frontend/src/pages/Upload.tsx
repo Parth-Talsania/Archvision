@@ -43,7 +43,7 @@ export default function UploadPage() {
 
   const isPdf = file?.name?.toLowerCase().endsWith(".pdf") ?? false;
 
-  /** Connect to SSE for real-time PDF progress, with polling fallback */
+  /** Follow a background analysis job via SSE, with polling fallback */
   const connectSSE = useCallback((jobId: number) => {
     const token = localStorage.getItem("archvision_token");
     const url = `/api/analyses/${jobId}/progress?token=${encodeURIComponent(token || "")}`;
@@ -61,7 +61,7 @@ export default function UploadPage() {
         } else if (data.step === "failed") {
           es.close();
           sseRef.current = null;
-          setError("PDF analysis failed on the server.");
+          setError("Analysis failed on the server.");
           setUploading(false);
         }
       } catch { /* ignore parse errors */ }
@@ -79,7 +79,7 @@ export default function UploadPage() {
             setPipelineComplete(true);
           } else if (r.data.status === "failed") {
             clearInterval(poll);
-            setError(r.data.error_message || "PDF analysis failed.");
+            setError(r.data.error_message || "Analysis failed.");
             setUploading(false);
           }
         } catch {
@@ -103,18 +103,21 @@ export default function UploadPage() {
       const formData = new FormData();
       formData.append("file", file);
 
+      // The server only stores the file and starts a background job, so the
+      // upload itself is quick; analysis progress comes over SSE.
       const res = await api.post("/analyze", formData, {
         headers: { "Content-Type": "multipart/form-data" },
-        timeout: isPdf ? 30000 : 600000,
+        timeout: 60000,
       });
 
       resultIdRef.current = res.data.id;
 
-      if (isPdf && res.data.status === "processing") {
-        // PDF returned immediately -- connect SSE for progress
+      if (res.data.status === "processing") {
         connectSSE(res.data.id);
+      } else if (res.data.status === "failed") {
+        setError(res.data.error_message || "Analysis failed.");
+        setUploading(false);
       } else {
-        // Image completed synchronously
         setPipelineComplete(true);
       }
     } catch (err: any) {

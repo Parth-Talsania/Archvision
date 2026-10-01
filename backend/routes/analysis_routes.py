@@ -7,9 +7,7 @@ import asyncio
 import json
 import queue
 import threading
-import traceback
 import uuid
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -66,37 +64,12 @@ async def upload_and_analyze(
     db.commit()
     db.refresh(job)
 
-    if file_type == "pdf":
-        # PDF: launch in background thread, return immediately
-        from ..services.pipeline_service import run_pdf_background
-        t = threading.Thread(
-            target=run_pdf_background,
-            args=(str(upload_path), job.id),
-            daemon=True,
-        )
-        t.start()
-        return job
-
-    # Image: run synchronously (fast, < 30s)
-    try:
-        from ..services.pipeline_service import analyze_image
-        result = analyze_image(str(upload_path), job.id)
-
-        job.status = "completed"
-        job.result_json = json.dumps(result["result_json"], ensure_ascii=False)
-        job.result_image_path = result.get("result_image_path")
-        job.total_rooms = result.get("total_rooms", 0)
-        job.rooms_with_labels = result.get("rooms_with_labels", 0)
-        job.rooms_with_dimensions = result.get("rooms_with_dimensions", 0)
-        job.completed_at = datetime.now(timezone.utc)
-    except Exception as e:
-        traceback.print_exc()
-        job.status = "failed"
-        job.error_message = str(e)[:2000]
-        job.completed_at = datetime.now(timezone.utc)
-
-    db.commit()
-    db.refresh(job)
+    # Analysis takes ~20-60 s for an image and minutes for a PDF, so run it in
+    # a background thread and return immediately; the client follows progress
+    # via GET /analyses/{id}/progress (SSE) or by polling the job.
+    from ..services import pipeline_service
+    target = pipeline_service.run_pdf_background if file_type == "pdf" else pipeline_service.run_image_background
+    threading.Thread(target=target, args=(str(upload_path), job.id), daemon=True).start()
     return job
 
 
@@ -106,7 +79,7 @@ async def stream_progress(
     current_user: User = Depends(get_current_user_sse),
     db: Session = Depends(get_db),
 ):
-    """SSE endpoint streaming real-time progress for a PDF analysis job."""
+    """SSE endpoint streaming real-time progress for an analysis job."""
     job = (
         db.query(AnalysisJob)
         .filter(AnalysisJob.id == job_id, AnalysisJob.user_id == current_user.id)

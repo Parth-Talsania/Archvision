@@ -15,6 +15,7 @@ import json
 import os
 import queue
 import sys
+import threading
 import traceback
 from datetime import datetime, timezone
 from pathlib import Path
@@ -72,6 +73,10 @@ def remove_progress_queue(job_id: int):
 
 _pipeline_instance: Optional[HybridFloorPlanPipeline] = None
 
+# The pipeline keeps per-run state (pipe.last_rooms), so analyses must not
+# overlap. Jobs run in background threads; this lock runs them one at a time.
+_pipeline_lock = threading.Lock()
+
 
 def _get_pipeline() -> HybridFloorPlanPipeline:
     """
@@ -109,7 +114,13 @@ def _get_pipeline() -> HybridFloorPlanPipeline:
 # ---------------------------------------------------------------------------
 
 
-def analyze_image(
+def analyze_image(image_path: str, job_id: int) -> Dict[str, Any]:
+    """Analyze one image (serialized with other analyses)."""
+    with _pipeline_lock:
+        return _analyze_image(image_path, job_id)
+
+
+def _analyze_image(
     image_path: str,
     job_id: int,
 ) -> Dict[str, Any]:
@@ -202,7 +213,13 @@ def analyze_image(
 # ---------------------------------------------------------------------------
 
 
-def analyze_pdf(
+def analyze_pdf(pdf_path: str, job_id: int) -> Dict[str, Any]:
+    """Analyze a PDF brochure (serialized with other analyses)."""
+    with _pipeline_lock:
+        return _analyze_pdf(pdf_path, job_id)
+
+
+def _analyze_pdf(
     pdf_path: str,
     job_id: int,
 ) -> Dict[str, Any]:
@@ -433,14 +450,25 @@ def analyze_pdf(
 
 
 # ---------------------------------------------------------------------------
-# Background PDF processing (runs in a thread, updates DB when done)
+# Background jobs (run in a thread, update the DB when done)
 # ---------------------------------------------------------------------------
 
 
 def run_pdf_background(pdf_path: str, job_id: int):
+    """Background-thread entry point for a PDF job."""
+    _run_job_background(job_id, "PDF", lambda: analyze_pdf(pdf_path, job_id))
+
+
+def run_image_background(image_path: str, job_id: int):
+    """Background-thread entry point for an image job."""
+    # Look analyze_image up at call time so tests can replace it.
+    _run_job_background(job_id, "image", lambda: analyze_image(image_path, job_id))
+
+
+def _run_job_background(job_id: int, kind: str, run: Callable[[], Dict[str, Any]]):
     """
-    Entry point for background thread. Runs analyze_pdf, pushes progress
-    events to the shared queue, and updates the DB on completion/failure.
+    Run an analysis, push progress events to the job's SSE queue, and
+    update the job row in the DB on completion or failure.
     """
     from backend.database import SessionLocal
     from backend.models import AnalysisJob
@@ -454,8 +482,8 @@ def run_pdf_background(pdf_path: str, job_id: int):
             pass
 
     try:
-        _push("processing", 0, 0, "Starting PDF analysis...")
-        result = analyze_pdf(pdf_path, job_id)
+        _push("processing", 0, 0, f"Starting {kind} analysis...")
+        result = run()
         _push("completed", 0, 0, "Analysis complete")
 
         db = SessionLocal()
