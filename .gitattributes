@@ -1,0 +1,9 @@
+* text=auto
+*.pdf binary
+*.pt binary
+*.pth binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.db binary
+*.lockb binary

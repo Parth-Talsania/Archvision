@@ -1,0 +1,52 @@
+# ── Secrets ───────────────────────────────────────────────
+.env
+*.local
+new.txt
+
+# ── Python ────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.venv/
+.venv-win/
+venv/
+.ipynb_checkpoints/
+
+# ── Node / frontend build ─────────────────────────────────
+node_modules/
+dist/
+
+# ── Archives / old snapshots ──────────────────────────────
+*.zip
+Kaggle_Output/
+context copy.txt
+
+# ── Runtime data (backend) ────────────────────────────────
+backend/archvision.db
+backend/uploads/
+backend/results/
+
+# ── Datasets & outputs ────────────────────────────────────
+Dataset/
+test_output/
+
+# ── Model weights & caches: keep only the trained best.pt ─
+results/*
+!results/runs/
+results/runs/*
+!results/runs/segment/
+results/runs/segment/*
+!results/runs/segment/runs/
+results/runs/segment/runs/*
+!results/runs/segment/runs/segment/
+results/runs/segment/runs/segment/*
+!results/runs/segment/runs/segment/floor_plan_rooms/
+results/runs/segment/runs/segment/floor_plan_rooms/weights/last.pt
+*.pth
+
+# ── Local AI-tool / editor settings ───────────────────────
+.factory/
+.qoder/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,712 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ================================================================ */
+/*  GLOBAL TYPOGRAPHY — "Next-Gen AI" Font Stack                     */
+/* ================================================================ */
+@layer base {
+  body {
+    @apply font-sans antialiased;
+  }
+}
+
+/* ================================================================ */
+/*  TELEMETRY BAR — Marquee + Live Pill                              */
+/* ================================================================ */
+.telemetry-bar {
+  /* font-family handled by Tailwind font-mono class */
+}
+
+/* Breathing glow on the LIVE pill */
+@keyframes live-breathe {
+  0%, 100% { box-shadow: 0 0 6px rgba(0, 240, 255, 0.2); }
+  50%      { box-shadow: 0 0 16px rgba(0, 240, 255, 0.45); }
+}
+.live-pill {
+  animation: live-breathe 3s ease-in-out infinite;
+}
+
+/* Infinite scrolling marquee */
+.marquee-container {
+  mask-image: linear-gradient(to right, transparent 0%, black 4%, black 96%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 4%, black 96%, transparent 100%);
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-scroll 40s linear infinite;
+}
+.marquee-content {
+  flex-shrink: 0;
+  padding-right: 4rem;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: rgba(148, 163, 184, 0.7);
+  white-space: nowrap;
+}
+@keyframes marquee-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ================================================================ */
+/*  PIPELINE OVERLAY — Step animations                                */
+/* ================================================================ */
+
+/* Spinning dashed ring around active step */
+@keyframes step-ring-spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.step-spin-ring {
+  animation: step-ring-spin 6s linear infinite;
+}
+
+/* Active step icon glow */
+.step-active {
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.35);
+}
+
+/* Scan line traveling down the thumbnail */
+@keyframes overlay-scan-line {
+  0%   { top: -4%; opacity: 0; }
+  10%  { opacity: 0.7; }
+  90%  { opacity: 0.7; }
+  100% { top: 104%; opacity: 0; }
+}
+.scan-line-overlay {
+  animation: overlay-scan-line 2.4s ease-in-out infinite;
+}
+
+/* Overlay entrance */
+@keyframes overlay-fade-in {
+  0%   { opacity: 0; transform: scale(0.96); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.pipeline-panel {
+  animation: overlay-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Smooth scroll + section offsets for sticky nav */
+html {
+  scroll-behavior: smooth;
+}
+#overview,
+#how-it-works,
+#tech-stack {
+  scroll-margin-top: 3.5rem;
+}
+
+/* Hide scrollbar on nav overflow */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+@layer base {
+  :root {
+    /* Deep Blue Galaxy — #030712 abyss blue */
+    --background: 224 71% 4%;
+    --foreground: 210 40% 98%;
+
+    /* Glassmorphic panels — rgba(15, 23, 42, 0.6) */
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 224 71% 4%;
+    --popover-foreground: 210 40% 98%;
+
+    /* Sky Blue primary */
+    --primary: 199 89% 48%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 222 47% 11%;
+    --muted-foreground: 215 16% 65%;
+
+    /* Neon Cyan accent */
+    --accent: 184 100% 50%;
+    --accent-foreground: 224 71% 4%;
+
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 215 25% 16%;
+    --input: 215 25% 16%;
+    --ring: 199 89% 48%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 222 47% 7%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 199 89% 48%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 215 25% 16%;
+    --sidebar-ring: 199 89% 48%;
+
+    --cyan-glow: 184 100% 50%;
+    --teal-glow: 199 89% 48%;
+  }
+
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+    --popover: 224 71% 4%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 199 89% 48%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 222 47% 11%;
+    --muted-foreground: 215 16% 65%;
+    --accent: 184 100% 50%;
+    --accent-foreground: 224 71% 4%;
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 215 25% 16%;
+    --input: 215 25% 16%;
+    --ring: 199 89% 48%;
+    --sidebar-background: 222 47% 7%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 199 89% 48%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 215 25% 16%;
+    --sidebar-ring: 199 89% 48%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply text-foreground;
+    /* Quantum Data Stream Gradient */
+    background: linear-gradient(135deg, #020617 0%, #0F172A 50%, #082F49 100%);
+    background-attachment: fixed;
+    background-size: cover;
+    color: #ffffff;
+    min-height: 100vh;
+    margin: 0;
+  }
+}
+
+/* ================================================================ */
+/*  BLUEPRINT GRID — Deep Blue Galaxy                                */
+/* ================================================================ */
+.blueprint-grid {
+  background-image:
+    linear-gradient(rgba(14, 165, 233, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(14, 165, 233, 0.06) 1px, transparent 1px),
+    linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px);
+  background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
+  animation: grid-pulse 4s ease-in-out infinite;
+}
+
+@keyframes grid-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+/* ================================================================ */
+/*  FLOATING SHAPES                                                  */
+/* ================================================================ */
+@keyframes float-drift-1 {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(80px, -120px) rotate(45deg); }
+  50% { transform: translate(-40px, -200px) rotate(90deg); }
+  75% { transform: translate(60px, -80px) rotate(135deg); }
+  100% { transform: translate(0, 0) rotate(180deg); }
+}
+@keyframes float-drift-2 {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  33% { transform: translate(-100px, 80px) rotate(-60deg); }
+  66% { transform: translate(50px, 160px) rotate(-120deg); }
+  100% { transform: translate(0, 0) rotate(-180deg); }
+}
+@keyframes float-drift-3 {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  50% { transform: translate(120px, -60px) rotate(90deg) scale(1.1); }
+  100% { transform: translate(0, 0) rotate(180deg) scale(1); }
+}
+
+/* Particle drift */
+@keyframes particle-drift {
+  0% { transform: translate(0, 0); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translate(200px, -300px); opacity: 0; }
+}
+
+/* Logo float */
+@keyframes logo-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+/* Card entrance */
+@keyframes card-enter {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Shimmer sweep */
+@keyframes shimmer-sweep {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* ================================================================ */
+/*  INPUT GLOW — Icy Cyan                                            */
+/* ================================================================ */
+.input-glow:focus {
+  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3), 0 0 20px rgba(0, 240, 255, 0.15);
+  border-color: rgba(14, 165, 233, 0.6);
+}
+
+/* ================================================================ */
+/*  SHIMMER BUTTON — Quantum Blue Gradient                           */
+/* ================================================================ */
+.btn-shimmer {
+  background-size: 200% 100%;
+  background-image: linear-gradient(
+    110deg,
+    #0284C7 0%,
+    #0284C7 40%,
+    #00D4FF 50%,
+    #0284C7 60%,
+    #0284C7 100%
+  );
+  transition: all 0.3s ease;
+}
+.btn-shimmer:hover {
+  animation: shimmer-sweep 1.5s ease-in-out infinite;
+  box-shadow: 0 0 30px rgba(14, 165, 233, 0.4);
+}
+.btn-shimmer:active {
+  transform: scale(0.97);
+}
+
+/* ================================================================ */
+/*  SOCIAL BUTTON HOVER                                              */
+/* ================================================================ */
+.social-btn {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.social-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(14, 165, 233, 0.2);
+}
+
+/* ================================================================ */
+/*  LINK UNDERLINE SLIDE                                             */
+/* ================================================================ */
+.link-slide {
+  position: relative;
+  display: inline-block;
+}
+.link-slide::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  transform: scaleX(0);
+  height: 1px;
+  bottom: -1px;
+  left: 0;
+  background: linear-gradient(90deg, #0284C7, #00D4FF);
+  transform-origin: bottom right;
+  transition: transform 0.3s ease;
+}
+.link-slide:hover::after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
+}
+
+/* ================================================================ */
+/*  GLASSMORPHIC PANELS — Quantum-Stream Frosted Glass               */
+/* ================================================================ */
+.glass-card {
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  animation: card-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.glass-panel {
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  transition: all 0.3s ease;
+}
+.glass-panel:hover {
+  border-color: rgba(56, 189, 248, 0.4);
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.1);
+}
+
+/* ================================================================ */
+/*  QUANTUM BLUE GRADIENT — CTA Buttons & Accents                    */
+/* ================================================================ */
+.bg-quantum-blue {
+  background: linear-gradient(135deg, #0284C7 0%, #00D4FF 100%);
+}
+
+.text-quantum-blue {
+  background: linear-gradient(135deg, #0284C7 0%, #00D4FF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Legacy aliases */
+.bg-hyperdrive { background: linear-gradient(135deg, #0284C7 0%, #00D4FF 100%); }
+.text-hyperdrive {
+  background: linear-gradient(135deg, #0284C7 0%, #00D4FF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ================================================================ */
+/*  CYAN → PURPLE GRADIENT TEXT                                      */
+/* ================================================================ */
+.text-gradient-cyan-purple {
+  background: linear-gradient(135deg, #00D4FF 0%, #0EA5E9 30%, #818CF8 70%, #A855F7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ================================================================ */
+/*  PILLAR CARD — Glow ring on hover                                 */
+/* ================================================================ */
+.pillar-card {
+  position: relative;
+  overflow: hidden;
+}
+.pillar-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(0,212,255,0.15), rgba(168,85,247,0.15));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.pillar-card:hover::before {
+  opacity: 1;
+}
+
+/* ================================================================ */
+/*  SCANNING LASER ANIMATION                                         */
+/* ================================================================ */
+@keyframes laser-scan {
+  0% { transform: translateX(-100%); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateX(100vw); opacity: 0; }
+}
+.laser-scan {
+  background: linear-gradient(135deg, #0284C7 0%, #00D4FF 100%);
+  animation: laser-scan 2.5s ease-in-out infinite;
+}
+
+/* ================================================================ */
+/*  SVG ANIMATIONS                                                   */
+/* ================================================================ */
+@keyframes radar-sweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes bbox-pulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(0, 240, 255, 0.3)); }
+  50% { transform: scale(1.05); filter: drop-shadow(0 0 12px rgba(0, 240, 255, 0.6)); }
+}
+
+@keyframes node-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.9; }
+}
+
+@keyframes draw-line {
+  0% { stroke-dashoffset: 300; }
+  100% { stroke-dashoffset: 0; }
+}
+
+/* ================================================================ */
+/*  GALAXY SKELETON PULSE — Navy ↔ Slate-Blue                        */
+/* ================================================================ */
+@keyframes galaxy-skeleton-pulse {
+  0%, 100% { background-color: #0F172A; }
+  50% { background-color: #1E293B; }
+}
+.animate-galaxy-pulse {
+  animation: galaxy-skeleton-pulse 2s ease-in-out infinite;
+  border-radius: inherit;
+}
+
+/* ================================================================ */
+/*  DATA STREAM CONNECTOR — Pulse traveling down                     */
+/* ================================================================ */
+@keyframes stream-pulse {
+  0% { top: -20%; opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* ================================================================ */
+/*  SCAN LINE — Horizontal sweep on image hover                      */
+/* ================================================================ */
+@keyframes scan-line {
+  0% { top: -2%; }
+  50% { top: 100%; }
+  100% { top: -2%; }
+}
+
+/* ================================================================ */
+/*  STORY PANEL — Soft glowing border                                 */
+/* ================================================================ */
+.story-panel {
+  border: 1px solid rgba(0, 212, 255, 0.15);
+  box-shadow:
+    0 0 30px rgba(0, 212, 255, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.story-panel:hover {
+  border-color: rgba(0, 212, 255, 0.3);
+  box-shadow:
+    0 0 50px rgba(0, 212, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* ================================================================ */
+/*  AVATAR PULSE — Soft ring animation                                */
+/* ================================================================ */
+@keyframes avatar-ring-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(14, 165, 233, 0);
+  }
+}
+.avatar-pulse {
+  animation: avatar-ring-pulse 3s ease-in-out infinite;
+}
+
+/* ================================================================ */
+/*  FOUNDER CARD — Gradient border glow on hover                      */
+/* ================================================================ */
+.founder-card {
+  position: relative;
+  overflow: hidden;
+}
+.founder-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(14,165,233,0.2), rgba(129,140,248,0.2));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.founder-card:hover::before {
+  opacity: 1;
+}
+
+/* ================================================================ */
+/*  SPATIAL REPORT — On-screen: hidden | Print: crisp B&W document    */
+/* ================================================================ */
+
+/* On screen the report container is invisible */
+.print-report {
+  display: none;
+}
+
+/* Export button glow */
+@keyframes export-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(0, 240, 255, 0.2), inset 0 0 4px rgba(0, 240, 255, 0.05); }
+  50%      { box-shadow: 0 0 20px rgba(0, 240, 255, 0.35), inset 0 0 8px rgba(0, 240, 255, 0.1); }
+}
+.btn-export-spatial {
+  animation: export-glow 3s ease-in-out infinite;
+}
+
+/* ================================================================ */
+/*  @media print — Strip dark theme, enterprise B&W document           */
+/* ================================================================ */
+@media print {
+  /* Hide everything except the report */
+  body > #root > * { display: none !important; }
+
+  /* Reset body */
+  body {
+    background: #ffffff !important;
+    color: #111111 !important;
+    font-family: 'Segoe UI', Arial, Helvetica, sans-serif !important;
+    font-size: 11pt !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Show the report */
+  .print-report {
+    display: block !important;
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: #ffffff;
+    color: #111111;
+    padding: 0.6in 0.7in;
+    overflow: visible;
+  }
+
+  .print-header { text-align: center; margin-bottom: 18pt; }
+  .print-title {
+    font-size: 18pt;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #000000;
+    margin: 0 0 10pt;
+  }
+  .print-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14pt;
+    font-size: 8.5pt;
+    color: #444444;
+  }
+  .print-meta strong { color: #000000; }
+  .print-verified {
+    font-weight: 700;
+    color: #166534;
+    border: 1pt solid #166534;
+    border-radius: 3pt;
+    padding: 1pt 6pt;
+  }
+
+  .print-rule {
+    border: none;
+    border-top: 1pt solid #cccccc;
+    margin: 14pt 0;
+  }
+
+  .print-section { margin-bottom: 14pt; }
+  .print-section-title {
+    font-size: 11pt;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-bottom: 2pt solid #000000;
+    padding-bottom: 4pt;
+    margin-bottom: 10pt;
+    color: #000000;
+  }
+
+  .print-image-wrap {
+    text-align: center;
+    margin: 10pt 0;
+  }
+  .print-blueprint {
+    max-width: 100%;
+    max-height: 3.5in;
+    object-fit: contain;
+    border: 1pt solid #cccccc;
+  }
+  .print-image-caption {
+    text-align: center;
+    font-size: 8pt;
+    color: #666666;
+    margin-top: 4pt;
+  }
+
+  .print-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+    margin-top: 6pt;
+  }
+  .print-table th {
+    background: #f1f5f9 !important;
+    color: #000000;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 7.5pt;
+    padding: 5pt 8pt;
+    border: 0.5pt solid #cccccc;
+    text-align: left;
+  }
+  .print-table td {
+    padding: 4pt 8pt;
+    border: 0.5pt solid #dddddd;
+    color: #222222;
+  }
+  .print-table tbody tr:nth-child(even) {
+    background: #f8fafc !important;
+  }
+  .print-label-cell { font-weight: 600; }
+  .print-total-label {
+    font-weight: 800;
+    text-align: right;
+    text-transform: uppercase;
+    font-size: 8pt;
+    letter-spacing: 0.05em;
+  }
+  .print-total-value {
+    font-weight: 800;
+    font-size: 10pt;
+  }
+
+  .print-disclaimer {
+    font-size: 7.5pt;
+    color: #888888;
+    font-style: italic;
+    margin-bottom: 8pt;
+  }
+
+  .print-footer {
+    margin-top: 24pt;
+    padding-top: 8pt;
+    border-top: 1pt solid #cccccc;
+    text-align: center;
+    font-size: 7pt;
+    color: #888888;
+  }
+  .print-footer-note {
+    margin-top: 3pt;
+    font-style: italic;
+  }
+
+  /* Force page break control */
+  .print-section { page-break-inside: avoid; }
+}

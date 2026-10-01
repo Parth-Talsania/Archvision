@@ -1,0 +1,16 @@
+
+Backend (terminal 1):
+
+cd /media/kali/82EED9EDEED9D98D/SAP/SAP_YOLO_V2/pipeline
+python -m uvicorn backend.main:app --reload --port 8000
+
+
+Frontend (terminal 2):
+
+cd /media/kali/82EED9EDEED9D98D/SAP/SAP_YOLO_V2/pipeline/archvision-login-glow-main
+/usr/share/nodejs/corepack/shims/npm run dev
+
+
+ .venv-win\Scripts\python -m uvicorn backend.main:app --reload --port 8000
+
+ cd archvision-login-glow-main ; npm run dev
