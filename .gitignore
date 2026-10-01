@@ -29,19 +29,11 @@ backend/results/
 Dataset/
 test_output/
 
-# ── Model weights & caches: keep only the trained best.pt ─
-results/*
-!results/runs/
-results/runs/*
-!results/runs/segment/
-results/runs/segment/*
-!results/runs/segment/runs/
-results/runs/segment/runs/*
-!results/runs/segment/runs/segment/
-results/runs/segment/runs/segment/*
-!results/runs/segment/runs/segment/floor_plan_rooms/
-results/runs/segment/runs/segment/floor_plan_rooms/weights/last.pt
+# ── Model weights & caches (the trained model lives in models/best.pt) ──
+results/
 *.pth
+Ultralytics/
+/runs/
 
 # ── Local AI-tool / editor settings ───────────────────────
 .factory/

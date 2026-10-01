@@ -742,7 +742,7 @@ def _build_dev_workflow(S, W):
 
     elements.append(Paragraph("Running the Frontend", S["h2"]))
     elements.append(Paragraph(
-        "<font face='Courier' size='9'>cd archvision-login-glow-main &amp;&amp; npm run dev</font>", S["code"]))
+        "<font face='Courier' size='9'>cd frontend &amp;&amp; npm run dev</font>", S["code"]))
     elements.append(Paragraph(
         "Dev server at <b>http://localhost:8080</b> with Vite proxy forwarding /api → backend.", S["body"]))
 

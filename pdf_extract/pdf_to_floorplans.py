@@ -55,7 +55,7 @@ class PDFFloorPlanExtractor:
             return None
         model_path = self.cfg.yolo_model
         if not model_path:
-            fallback = Path("results/runs/segment/runs/segment/floor_plan_rooms/weights/best.pt")
+            fallback = Path(__file__).resolve().parents[1] / "models" / "best.pt"
             if fallback.exists():
                 model_path = str(fallback)
         if not model_path:

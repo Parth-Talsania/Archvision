@@ -1,4 +1,4 @@
-# ArchVision - Hybrid AI Floor Plan Analysis Pipeline - Complete Project Context
+# ArchVision — Architecture & Technical Reference
 
 ## 1. PROJECT OVERVIEW
 
@@ -48,8 +48,6 @@
 - **Development:** Vite dev server (port 8080) with proxy to FastAPI backend (port 8000)
 - **Production:** Build output served via any static file server
 - **Deployment:** Monorepo structure (frontend and backend in same workspace)
-- **OS:** Kali Linux (rolling); Node.js v20 via system install; Python 3 system install with `--break-system-packages`
-- **npm path:** `/usr/share/nodejs/corepack/shims/npm` (corepack shims on this system)
 
 ## 3. CORE ARCHITECTURE
 
@@ -207,12 +205,13 @@ backend/
 ├── routes/
 │   ├── __init__.py
 │   ├── auth_routes.py     # /api/auth/* endpoints (register, login, me)
-│   ├── oauth_routes.py    # /api/auth/google, /api/auth/github, callbacks (NEW)
+│   ├── oauth_routes.py    # /api/auth/google, /api/auth/github, callbacks
 │   ├── analysis_routes.py # /api/analyze, /api/analyses/*, /api/dashboard
 │   └── files_routes.py    # /api/files/* endpoints (public file serving)
 ├── services/
 │   ├── __init__.py
-│   └── pipeline_service.py # Pipeline wrapper service (singleton pattern)
+│   ├── pipeline_service.py # Pipeline wrapper service (singleton pattern)
+│   └── summary_generator.py # Template-based natural-language property summary
 ├── uploads/               # Uploaded files storage (UUID-prefixed)
 ├── results/               # Analysis results storage (per job_id)
 └── archvision.db         # SQLite database
@@ -237,7 +236,7 @@ UPLOAD_DIR = BACKEND_DIR / "uploads"
 RESULTS_DIR = BACKEND_DIR / "results"
 
 # Pipeline
-MODEL_PATH = str(PROJECT_ROOT / "results" / "runs/.../best.pt")
+MODEL_PATH = str(PROJECT_ROOT / "models" / "best.pt")
 
 # OAuth
 GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET  # from .env
@@ -279,7 +278,7 @@ class AnalysisJob(Base):
 - `POST /api/auth/login` → `{access_token, token_type}`
 - `GET /api/auth/me` → `{id, email, full_name, created_at}` (protected)
 
-**OAuth Routes (/api/auth) — NEW:**
+**OAuth Routes (/api/auth):**
 - `GET /api/auth/google` → Redirects to Google OAuth consent screen (sets CSRF state cookie)
 - `GET /api/auth/google/callback` → Exchanges code for tokens, find-or-create user, redirects to `FRONTEND_URL/auth/callback?token=JWT`
 - `GET /api/auth/github` → Redirects to GitHub OAuth authorize page (sets CSRF state cookie)
@@ -293,6 +292,8 @@ class AnalysisJob(Base):
 - `GET /api/analyses/{id}/download` → Download JSON (protected)
 - `DELETE /api/analyses/{id}` → Delete (protected)
 - `GET /api/dashboard` → Stats (protected, total/completed/failed/rooms/recent)
+- `GET /api/analyses/{id}/progress` → Server-Sent Events stream of PDF processing progress (protected)
+- `GET /api/analyses/{id}/summary` → Generated natural-language property summary (protected)
 
 **File Routes (/api/files):**
 - `GET /api/files/uploads/{filename}` → Serve uploaded files (**public** — UUID filename security)
@@ -309,13 +310,13 @@ class AnalysisJob(Base):
 
 **Functions:**
 - `analyze_image(image_path, job_id)` — Mirrors Kaggle Cell 4
-- `analyze_pdf(pdf_path, job_id)` — Mirrors Kaggle Cell 8 (PDFFloorPlanExtractor with YOLO validation)
+- `analyze_pdf(pdf_path, job_id)` — Mirrors Kaggle Cell 8 / `scripts/run_pdf_pipeline.py` (PDFFloorPlanExtractor with YOLO validation)
 
 ## 7. FRONTEND ARCHITECTURE (React)
 
 ### 7.1 Directory Structure
 ```
-archvision-login-glow-main/
+frontend/
 ├── src/
 │   ├── api/
 │   │   └── client.ts              # Axios instance with JWT interceptors
@@ -323,16 +324,18 @@ archvision-login-glow-main/
 │   │   ├── ProtectedRoute.tsx     # Authentication guard
 │   │   ├── Layout.tsx             # Sidebar layout + TelemetryBar
 │   │   ├── NavLink.tsx            # NavLink wrapper with active/pending className support
-│   │   ├── TelemetryBar.tsx       # Fixed top-edge LIVE system telemetry marquee (NEW)
+│   │   ├── TelemetryBar.tsx       # Fixed top-edge LIVE system telemetry marquee
 │   │   ├── UploadZone.tsx         # Drag-and-drop upload component
-│   │   ├── PipelineOverlay.tsx    # Animated pipeline processing stepper overlay (NEW)
+│   │   ├── PipelineOverlay.tsx    # Animated pipeline processing stepper overlay
 │   │   ├── FloorPlanViewer.tsx    # Interactive SVG room polygon viewer with zoom/pan
 │   │   ├── RoomDetailPanel.tsx    # Room details sidebar
-│   │   ├── AnalyticsDashboard.tsx # Full analytics suite: KPIs, doughnut, radar, bars (NEW)
-│   │   ├── SpatialReport.tsx      # Printable spatial audit report (portal into body) (NEW)
-│   │   ├── HowItWorks.tsx         # Two-step pipeline explanation with lightbox images (NEW)
-│   │   ├── TechStack.tsx          # Tech stack grid with SVG logos and hover glows (NEW)
-│   │   ├── WifiMapper.tsx         # Wi-Fi Deadzone Mapper mini-project (NEW)
+│   │   ├── AnalyticsDashboard.tsx # Full analytics suite: KPIs, doughnut, radar, bars
+│   │   ├── SpatialReport.tsx      # Printable spatial audit report (portal into body)
+│   │   ├── HowItWorks.tsx         # Two-step pipeline explanation with lightbox images
+│   │   ├── TechStack.tsx          # Tech stack grid with SVG logos and hover glows
+│   │   ├── WifiMapper.tsx         # Wi-Fi Deadzone Mapper mini-project
+│   │   ├── CostEstimator.tsx      # Per-room construction cost estimate with breakdown charts
+│   │   ├── PropertySummary.tsx    # Natural-language property summary card
 │   │   └── ui/                    # shadcn/ui primitives (button, card, dialog, etc.)
 │   ├── contexts/
 │   │   └── AuthContext.tsx        # Auth state: login, register, loginWithToken, logout
@@ -341,17 +344,19 @@ archvision-login-glow-main/
 │   ├── lib/
 │   │   └── utils.ts               # cn() class merge utility
 │   ├── pages/
-│   │   ├── Login.tsx              # Login with floating SVG background animations + OAuth buttons (NEW: Google/GitHub)
+│   │   ├── Landing.tsx            # Public landing page (features, pipeline overview)
+│   │   ├── Compare.tsx            # Side-by-side comparison of two analyses
+│   │   ├── Login.tsx              # Login with floating SVG background animations + OAuth buttons
 │   │   ├── Register.tsx           # Registration page
-│   │   ├── OAuthCallback.tsx      # OAuth redirect handler (?token=... → loginWithToken) (NEW)
-│   │   ├── Dashboard.tsx          # Dashboard with sticky nav tabs (Overview, How It Works, Tech Stack) (UPDATED)
-│   │   ├── Upload.tsx             # File upload page with PipelineOverlay animation (UPDATED)
-│   │   ├── AnalysisView.tsx       # Analysis results: viewer tab, analytics tab, spatial report, Wi-Fi button (UPDATED)
+│   │   ├── OAuthCallback.tsx      # OAuth redirect handler (?token=... → loginWithToken)
+│   │   ├── Dashboard.tsx          # Dashboard with sticky nav tabs (Overview, How It Works, Tech Stack)
+│   │   ├── Upload.tsx             # File upload page with PipelineOverlay animation
+│   │   ├── AnalysisView.tsx       # Analysis results: viewer tab, analytics tab, spatial report, Wi-Fi button
 │   │   ├── History.tsx            # Paginated analysis history table
-│   │   ├── ProjectIntro.tsx       # "Intelligence for Spatial Design" intro page (NEW)
-│   │   ├── Founders.tsx           # Team bio cards with GitHub/LinkedIn links (NEW)
+│   │   ├── ProjectIntro.tsx       # "Intelligence for Spatial Design" intro page
+│   │   ├── Founders.tsx           # Team bio cards with GitHub/LinkedIn links
 │   │   ├── NotFound.tsx           # 404 page
-│   │   └── Index.tsx              # Redirects to /login
+│   │   └── Index.tsx              # Redirect helper
 │   ├── App.tsx                    # Main app routing (public + protected routes)
 │   └── main.tsx                   # Entry point
 ├── public/
@@ -374,7 +379,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email, password) => Promise<void>;
-  loginWithToken: (token: string) => Promise<void>;  // NEW — for OAuth callback
+  loginWithToken: (token: string) => Promise<void>;  // used by the OAuth callback
   register: (email, password, fullName) => Promise<void>;
   logout: () => void;
 }
@@ -387,7 +392,8 @@ interface AuthContextType {
 ```tsx
 <Routes>
   {/* Public routes */}
-  <Route path="/" element={<Navigate to="/login" />} />
+  <Route path="/" element={<Navigate to="/landing" />} />
+  <Route path="/landing" element={<Landing />} />
   <Route path="/login" element={<Login />} />
   <Route path="/register" element={<Register />} />
   <Route path="/auth/callback" element={<OAuthCallback />} />
@@ -400,6 +406,7 @@ interface AuthContextType {
     <Route path="/upload" element={<UploadPage />} />
     <Route path="/analysis/:id" element={<AnalysisView />} />
     <Route path="/history" element={<HistoryPage />} />
+    <Route path="/compare" element={<Compare />} />
     <Route path="/wifi-mapper" element={<WifiMapper />} />
   </Route>
 
@@ -409,7 +416,7 @@ interface AuthContextType {
 
 ### 7.5 Key Components
 
-**TelemetryBar (src/components/TelemetryBar.tsx) — NEW:**
+**TelemetryBar (src/components/TelemetryBar.tsx):**
 - Fixed top-edge bar (h-8, z-50) with `bg-slate-950/80 backdrop-blur-md`
 - "System: Online" LIVE indicator pill with pinging dot animation
 - Scrolling marquee displaying system telemetry text (OpenCV, EasyOCR status, latency)
@@ -434,35 +441,35 @@ interface AuthContextType {
 - Fields: full name, email, password, confirm password
 - Client-side validation: password match, min 6 chars
 
-**OAuthCallback Page (src/pages/OAuthCallback.tsx) — NEW:**
+**OAuthCallback Page (src/pages/OAuthCallback.tsx):**
 - Reads `?token=...` or `?error=...` from URL search params
 - On token: calls `loginWithToken(token)` → navigates to `/dashboard`
 - On error: shows error message, redirects to `/login` after 3s with error state
 
-**Dashboard Page (src/pages/Dashboard.tsx) — UPDATED:**
+**Dashboard Page (src/pages/Dashboard.tsx):**
 - Sticky in-page navigation bar with IntersectionObserver-powered active tab highlighting
 - Three sections: Overview, How It Works, Tech Stack
 - Overview: welcome header, 4 stat cards (total/completed/failed/rooms), recent analyses list
 - Embeds `<HowItWorks />` and `<TechStack />` components below
 
-**HowItWorks Component (src/components/HowItWorks.tsx) — NEW:**
+**HowItWorks Component (src/components/HowItWorks.tsx):**
 - Two-step pipeline explanation (Geometric Core Segmentation + Semantic Recognition)
 - Glass-framed image containers with lightbox modal on click, scan-line hover animation
 - Animated DataStreamConnector between steps (glowing vertical line with pulse + arrow)
 - Feature pills for each step
 
-**TechStack Component (src/components/TechStack.tsx) — NEW:**
+**TechStack Component (src/components/TechStack.tsx):**
 - Two grouped grids: "AI & Backend" (9 items) and "Frontend & Visualization" (4 items)
 - Custom inline SVG logos for each tech: YOLOv8, Python, FastAPI, OpenCV, EasyOCR, PaddleOCR, Shapely, PyMuPDF, NumPy, React, Tailwind, Recharts, Framer Motion
 - Hover glow effects using brand colors per technology
 
-**Upload Page (src/pages/Upload.tsx) — UPDATED:**
+**Upload Page (src/pages/Upload.tsx):**
 - UploadZone drag-and-drop component (accepts PNG, JPG, PDF, BMP, TIFF)
 - On analyze: shows `<PipelineOverlay />` with animated stepper while backend processes
 - 10-minute timeout for large PDFs
 - After pipeline completes + animation finishes → navigates to `/analysis/{id}`
 
-**PipelineOverlay Component (src/components/PipelineOverlay.tsx) — NEW:**
+**PipelineOverlay Component (src/components/PipelineOverlay.tsx):**
 - Full-screen modal overlay shown during analysis processing
 - 4-step stepper: INGEST → SEGMENT → RECOGNIZE → FUSE
 - Steps 0-2 advance on timed intervals (2.5s, 4s, 5s); step 3 stays active until real pipeline finishes
@@ -470,16 +477,16 @@ interface AuthContextType {
 - Thumbnail preview (image preview or PDF icon) with scan line animation
 - After all steps complete + 800ms delay → calls `onAnimationDone` so parent can navigate
 
-**AnalysisView Page (src/pages/AnalysisView.tsx) — UPDATED:**
+**AnalysisView Page (src/pages/AnalysisView.tsx):**
 - Top bar: back link, filename, date, PDF badge
-- Action buttons: "Export Spatial Report" (print), "Download JSON", "Launch Wi-Fi Simulator" (NEW)
+- Action buttons: "Export Spatial Report" (print), "Download JSON", "Launch Wi-Fi Simulator"
 - Tab switcher: Viewer | Insights & Analytics
 - **Viewer tab:** Summary stats, FloorPlanViewer + RoomDetailPanel, PDF image galleries, page selector
 - **Analytics tab:** Renders `<AnalyticsDashboard />` with all rooms
 - **Spatial Report:** Renders `<SpatialReport />` (hidden portal) and triggers `window.print()`
 - **Wi-Fi Simulator button:** Maps rooms to `{id, label, x, y, area}` using centroids, saves to `localStorage("archvision_wifi_data")` + `localStorage("archvision_blueprint")`, navigates to `/wifi-mapper`
 
-**AnalyticsDashboard Component (src/components/AnalyticsDashboard.tsx) — NEW:**
+**AnalyticsDashboard Component (src/components/AnalyticsDashboard.tsx):**
 - Props: `rooms: Room[], filename: string`
 - **KPI Hero Cards** (4): Total Usable Area, Room Count, Largest Space, Space Efficiency (circular gauge)
 - **Doughnut Chart:** Space allocation by category (Sleeping, Living, Utility, Outdoor) using Recharts PieChart
@@ -488,7 +495,7 @@ interface AuthContextType {
 - **Export Button:** Downloads plain-text analytics report
 - All cards use `useCountUp` hook for animated number display, `useInView` hook for animate-on-scroll
 
-**SpatialReport Component (src/components/SpatialReport.tsx) — NEW:**
+**SpatialReport Component (src/components/SpatialReport.tsx):**
 - Renders via `createPortal` into `document.body` (for `@media print`)
 - Sections: header (doc ID, timestamp, filename), segmented blueprint image, spatial data matrix table (room label, sqft, occupancy type, confidence), smart building estimates (HVAC tonnage, LED wattage)
 - Auto-generated random document ID (AV-XXXXXXXX)
@@ -507,16 +514,16 @@ interface AuthContextType {
 - Paginated table (15/page) with columns: file, type, status badge, rooms, date, actions
 - Actions: view (link), download (authenticated axios blob), delete (with confirm)
 
-**ProjectIntro Page (src/pages/ProjectIntro.tsx) — NEW:**
+**ProjectIntro Page (src/pages/ProjectIntro.tsx):**
 - Hero header: "ArchVision: Intelligence for Spatial Design"
 - Three pillar cards: The Theoretical Gap, The Technical Stack, Real-World Utility
 
-**Founders Page (src/pages/Founders.tsx) — NEW:**
+**Founders Page (src/pages/Founders.tsx):**
 - Story panel: "How ArchVision Started" (IAR 6th semester project narrative)
 - 5 founder cards with initials avatar, name, role, bio, GitHub/LinkedIn links
 - Team: Mohammed Ayaan, Parth Talsania, Abhishek Rathod, Harshil Darji, Heli Darji
 
-### 7.6 Wi-Fi Deadzone Mapper (src/components/WifiMapper.tsx) — NEW MINI-PROJECT
+### 7.6 Wi-Fi Deadzone Mapper (src/components/WifiMapper.tsx)
 
 **Purpose:** Proof-of-concept downstream application built on ArchVision's structured JSON output. Uses X/Y centroids from the pipeline to simulate Wi-Fi signal drop-off using Euclidean distance math.
 
@@ -563,29 +570,27 @@ const toContainer = (px, py) => ({
 
 ## 8. DEVELOPMENT WORKFLOW
 
-### 8.1 Backend Development
+### 8.1 Backend
 ```bash
-cd /media/kali/82EED9EDEED9D98D/SAP/SAP_YOLO_V2/pipeline
+python -m venv .venv
+# Windows: .venv\Scripts\activate    Linux/macOS: source .venv/bin/activate
+pip install -r backend/requirements.txt
 python -m uvicorn backend.main:app --reload --port 8000
 # API docs: http://127.0.0.1:8000/docs
 ```
 
-### 8.2 Frontend Development
+### 8.2 Frontend
 ```bash
-cd /media/kali/82EED9EDEED9D98D/SAP/SAP_YOLO_V2/pipeline/archvision-login-glow-main
-/usr/share/nodejs/corepack/shims/npm run dev
-# OR: node ./node_modules/.bin/vite
-# Server: http://localhost:8080 (proxies /api → http://127.0.0.1:8000)
+cd frontend
+npm install
+npm run dev
+# http://localhost:8080 (proxies /api → http://127.0.0.1:8000)
 ```
 
-### 8.3 Install Dependencies
+### 8.3 Tests
 ```bash
-# Frontend
-/usr/share/nodejs/corepack/shims/npm install
-
-# Backend (in venv)
-source .venv/bin/activate
-pip install -r backend/requirements.txt
+python -m pytest tests
+cd frontend && npm test
 ```
 
 ## 9. ENVIRONMENT VARIABLES
@@ -619,11 +624,7 @@ ARCHVISION_BACKEND_URL=http://localhost:8000
 
 ### 11.1 Common Issues
 
-**npm not found on Kali:** Use `/usr/share/nodejs/corepack/shims/npm` or `node ./node_modules/.bin/vite`
-
-**pip install PEP 668 error:** Use `--break-system-packages` flag or use venv
-
-**ModuleNotFoundError:** Install deps in venv: `.venv/bin/pip install -r backend/requirements.txt`
+**ModuleNotFoundError:** Activate the venv and run `pip install -r backend/requirements.txt`
 
 **Floor plan images 401 errors:** File-serving endpoints are public (no JWT on <img> tags). Security via UUID filenames.
 
@@ -635,7 +636,6 @@ ARCHVISION_BACKEND_URL=http://localhost:8000
 
 **Wi-Fi centroids misplaced:** Pipeline outputs centroids in original image pixel space. Use `getTransform()` + `toContainer()` to map through object-contain scale + letterbox offset.
 
-**Sandbox SSH restriction on npm install:** Run with required_permissions='all'
 
 ## 12. PROJECT HISTORY & EVOLUTION
 
@@ -653,7 +653,8 @@ ARCHVISION_BACKEND_URL=http://localhost:8000
 11. HowItWorks + TechStack: Interactive pipeline documentation on Dashboard
 12. AnalyticsDashboard: Full Recharts analytics suite with KPIs, doughnut, radar, bars
 13. SpatialReport: Printable audit report with smart building estimates
-14. **Wi-Fi Deadzone Mapper (latest):** Proof-of-concept downstream application using pipeline centroids for Euclidean Wi-Fi signal simulation with Framer Motion heatmap
+14. **Wi-Fi Deadzone Mapper:** Proof-of-concept downstream application using pipeline centroids for Euclidean Wi-Fi signal simulation with Framer Motion heatmap
+15. Landing page, Compare view, Cost Estimator and generated property summaries
 
 ---
 

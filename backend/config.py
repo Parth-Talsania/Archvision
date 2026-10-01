@@ -38,7 +38,7 @@ RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 # Pipeline
 MODEL_PATH: str = os.getenv(
     "ARCHVISION_MODEL_PATH",
-    str(PROJECT_ROOT / "results" / "runs" / "segment" / "runs" / "segment" / "floor_plan_rooms" / "weights" / "best.pt"),
+    str(PROJECT_ROOT / "models" / "best.pt"),
 )
 
 # Allowed upload extensions
