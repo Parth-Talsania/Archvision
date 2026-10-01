@@ -122,11 +122,13 @@ const features = [
   },
 ];
 
+// Measured values: mask mAP@50 from training/runs/floor_plan_rooms/results.csv,
+// per-image time on CPU, PDF render DPI from the extractor config.
 const stats = [
-  { value: "98%", label: "Detection Accuracy" },
-  { value: "< 30s", label: "Processing Time" },
-  { value: "450", label: "DPI Resolution" },
-  { value: "24/7", label: "API Availability" },
+  { value: "0.98", label: "Mask mAP@50" },
+  { value: "7", label: "Room Classes" },
+  { value: "< 30s", label: "Per Image (CPU)" },
+  { value: "450", label: "PDF Render DPI" },
 ];
 
 /* ================================================================ */
