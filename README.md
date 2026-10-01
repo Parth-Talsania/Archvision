@@ -180,17 +180,15 @@ Key knobs:
 Single command:
 
 ```bash
-python -m full_pipeline.run ^
-  --pdf "Dataset/PDF/Test_2.pdf" ^
-  --out_dir "results/full_merged_test2" ^
-  --yolo_model "results/runs/segment/runs/segment/floor_plan_rooms/weights/best.pt" ^
-  --text-source auto --ocr-engine paddle --save-text-debug
+python scripts/run_pdf_pipeline.py ^
+  --model "results/runs/segment/runs/segment/floor_plan_rooms/weights/best.pt" ^
+  --pdf "Dataset/pdf_files/Test_5.pdf" ^
+  --output-dir "results/full_pipeline"
 ```
 
-Main artifact:
-- `out_dir/final_output.json`
-
-The merged pipeline keeps extractor and analyzer as standalone modules and integrates them through importable APIs.
+Main artifacts (per PDF):
+- `output-dir/<pdf_name>/full_pipeline_report.json`
+- `output-dir/<pdf_name>/step1/` (extracted floor plan crops) and `step2/` (per-plan analysis)
 
 ### Why PDF Text Beats OCR
 

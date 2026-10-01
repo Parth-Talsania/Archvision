@@ -4,7 +4,7 @@ for use by the FastAPI backend.
 
 Follows the same flow as the Kaggle Output kaggle_notebook.ipynb:
   - Cell 4 (single image): scripts/run_pipeline.py flow
-  - Cell 8 (PDF):          full_pipeline/run_full_pipeline.py flow
+  - Cell 8 (PDF):          scripts/run_pdf_pipeline.py flow
                             using PDFFloorPlanExtractor (Step 1)
                             which scores pages + validates with YOLO
                             so only real 2D floor plans are extracted.
@@ -190,7 +190,7 @@ def analyze_image(
 
 
 # ---------------------------------------------------------------------------
-# PDF analysis  (mirrors Kaggle Cell 8 / Kaggle_Output run_full_pipeline.py)
+# PDF analysis  (mirrors Kaggle Cell 8 / scripts/run_pdf_pipeline.py)
 #
 # Step 1 — PDFFloorPlanExtractor (_run_step1_extract):
 #   Renders thumbnail (120 DPI) -> text + image scoring per page
@@ -209,7 +209,7 @@ def analyze_pdf(
     job_id: int,
 ) -> Dict[str, Any]:
     """
-    Run full pipeline on a PDF, matching Kaggle Output run_full_pipeline.py:
+    Run full pipeline on a PDF, matching scripts/run_pdf_pipeline.py:
 
       Step 1  PDFFloorPlanExtractor (same as _run_step1_extract):
               Scores pages by text keywords + image features,
@@ -229,7 +229,7 @@ def analyze_pdf(
 
     # ------------------------------------------------------------------
     # Step 1: PDFFloorPlanExtractor — same config as Kaggle Cell 8
-    # (defaults from run_full_pipeline.py build_parser())
+    # (defaults from scripts/run_pdf_pipeline.py build_parser())
     # ------------------------------------------------------------------
     extract_cfg = ExtractConfig(
         pdf=pdf_path,
