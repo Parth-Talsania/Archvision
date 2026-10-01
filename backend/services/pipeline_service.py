@@ -33,6 +33,7 @@ os.environ.setdefault("ULTRALYTICS_CONFIG_DIR", str(_PROJECT_ROOT / "Ultralytics
 
 from pipeline import HybridFloorPlanPipeline, OCRConfig, ParseConfig, PipelineConfig
 from pipeline.frontend_schema import (
+    has_room_label,
     SCHEMA_VERSION,
     build_frontend_output,
     convert_legacy_output_to_frontend,
@@ -174,10 +175,7 @@ def analyze_image(
 
     # Summary stats from rooms
     total_rooms = len(pipe.last_rooms)
-    rooms_with_labels = sum(
-        1 for r in pipe.last_rooms
-        if r.label and r.label != r.class_name
-    )
+    rooms_with_labels = sum(1 for r in pipe.last_rooms if has_room_label(r.label))
     rooms_with_dimensions = sum(1 for r in pipe.last_rooms if r.dimensions_text)
 
     return {
@@ -339,10 +337,7 @@ def analyze_pdf(
                 json.dump(legacy_output, f, indent=2, ensure_ascii=False)
 
             total_rooms += len(rooms)
-            total_labels += sum(
-                1 for r in rooms
-                if r.get("label") and r["label"] != r.get("class_name", "")
-            )
+            total_labels += sum(1 for r in rooms if has_room_label(r.get("label")))
             total_dims += sum(1 for r in rooms if r.get("dimensions_text"))
 
             # Generate overlay  (same as Cell 8: overlay = _draw_overlay_clean / draw_final_overlay)

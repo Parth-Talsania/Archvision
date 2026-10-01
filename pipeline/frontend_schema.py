@@ -25,6 +25,13 @@ if TYPE_CHECKING:
 SCHEMA_VERSION = "1.0.0"
 
 
+def has_room_label(label: Optional[str]) -> bool:
+    """True if a room has a real label, i.e. anything except the generic
+    "room" class. The YOLO model is multi-class, so a label that matches the
+    detected class name (e.g. OCR and YOLO both say "Hall") still counts."""
+    return bool(label) and label.strip().lower() != "room"
+
+
 # =============================================================================
 # FRONTEND DATACLASSES
 # =============================================================================
@@ -307,7 +314,7 @@ def build_frontend_output(
     frontend_rooms = [_room_to_frontend(r, include_debug=include_debug) for r in rooms]
 
     # Calculate summary statistics
-    rooms_with_labels = sum(1 for r in rooms if r.label and r.label != r.class_name)
+    rooms_with_labels = sum(1 for r in rooms if has_room_label(r.label))
     rooms_with_dimensions = sum(1 for r in rooms if r.dimensions_text)
     rooms_with_area = sum(1 for r in rooms if r.area_ft2 is not None)
 
@@ -387,7 +394,7 @@ def build_frontend_output_multipage(
     for pd in pages_data:
         frontend_rooms = [_room_to_frontend(r, include_debug=pd.get("include_debug", False)) for r in pd["rooms"]]
 
-        rooms_with_labels = sum(1 for r in pd["rooms"] if r.label and r.label != r.class_name)
+        rooms_with_labels = sum(1 for r in pd["rooms"] if has_room_label(r.label))
         rooms_with_dimensions = sum(1 for r in pd["rooms"] if r.dimensions_text)
         rooms_with_area = sum(1 for r in pd["rooms"] if r.area_ft2 is not None)
 
@@ -568,7 +575,7 @@ def convert_legacy_output_to_frontend(
         rooms_data.append(room_dict)
 
     # Calculate summary
-    rooms_with_labels = sum(1 for r in rooms_data if r["label"])
+    rooms_with_labels = sum(1 for r in rooms_data if has_room_label(r["label"]))
     rooms_with_dimensions = sum(1 for r in rooms_data if r["dimensions"])
     rooms_with_area = sum(1 for r in rooms_data if r["area"]["value_sqft"])
 

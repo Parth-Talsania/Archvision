@@ -22,6 +22,12 @@ def _get_area(room: Dict) -> float:
     return 0.0
 
 
+def _round(value: float) -> int:
+    """Round half up, matching Math.round in the frontend (Python's round()
+    rounds half to even, and int() truncates)."""
+    return int(value + 0.5)
+
+
 def _get_label(room: Dict) -> str:
     return room.get("label") or room.get("label_raw") or room.get("name") or "Room"
 
@@ -109,7 +115,7 @@ def generate_summary(
     parts: List[str] = []
 
     # Opening
-    area_str = f"approximately {int(total_area)} sqft" if total_area > 0 else "area to be determined"
+    area_str = f"approximately {_round(total_area)} sqft" if total_area > 0 else "area to be determined"
     parts.append(
         f"This is a {bhk} unit spanning {area_str}, "
         f"comprising {total_rooms} distinct spaces."
@@ -121,7 +127,7 @@ def generate_summary(
         m_dim = _get_dimensions(m)
         m_area = _get_area(m)
         dim_str = f" ({m_dim})" if m_dim else ""
-        area_str2 = f" at {int(m_area)} sqft" if m_area > 0 else ""
+        area_str2 = f" at {_round(m_area)} sqft" if m_area > 0 else ""
         has_attached = any(
             _classify(_get_label(w)) == "wet"
             for w in all_rooms
@@ -138,7 +144,7 @@ def generate_summary(
         avg = sum(_get_area(b) for b in bedrooms) / len(bedrooms)
         parts.append(
             f"There are {len(bedrooms)} additional bedrooms"
-            f"{f' averaging {int(avg)} sqft each' if avg > 0 else ''}."
+            f"{f' averaging {_round(avg)} sqft each' if avg > 0 else ''}."
         )
 
     # Living / Kitchen
@@ -151,7 +157,7 @@ def generate_summary(
         k_dim = _get_dimensions(k)
         k_area = _get_area(k)
         if k_dim:
-            parts.append(f"The kitchen measures {k_dim}{f' ({int(k_area)} sqft)' if k_area else ''}.")
+            parts.append(f"The kitchen measures {k_dim}{f' ({_round(k_area)} sqft)' if k_area else ''}.")
 
     # Wet areas
     if len(wet) > 0:
@@ -172,7 +178,7 @@ def generate_summary(
     highlights: List[str] = []
     highlights.append(f"{bhk} configuration with {total_rooms} spaces")
     if total_area > 0:
-        highlights.append(f"Total carpet area: {int(total_area)} sqft")
+        highlights.append(f"Total carpet area: {_round(total_area)} sqft")
     if master:
         highlights.append("Dedicated Master Bedroom")
     if len(wet) >= len(all_beds) and len(all_beds) > 0:
@@ -190,8 +196,8 @@ def generate_summary(
     if total_area > 0:
         bed_area = sum(_get_area(r) for r in all_beds)
         living_area = sum(_get_area(r) for r in living + dining)
-        bed_pct = int((bed_area / total_area) * 100) if bed_area else 0
-        living_pct = int((living_area / total_area) * 100) if living_area else 0
+        bed_pct = _round((bed_area / total_area) * 100) if bed_area else 0
+        living_pct = _round((living_area / total_area) * 100) if living_area else 0
         if bed_pct > 0:
             highlights.append(f"{bed_pct}% of area allocated to bedrooms")
         if living_pct > 0:
@@ -203,7 +209,7 @@ def generate_summary(
         "summary": summary_text,
         "highlights": highlights,
         "bhk": bhk,
-        "total_area_sqft": int(total_area) if total_area > 0 else None,
+        "total_area_sqft": _round(total_area) if total_area > 0 else None,
         "room_count": total_rooms,
         "bedroom_count": len(all_beds),
         "bathroom_count": len(wet),
