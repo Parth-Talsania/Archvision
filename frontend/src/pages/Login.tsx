@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Building2, Brain, ScanEye, Workflow, Frame, Ruler, PencilRuler, LayoutGrid } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { apiErrorMessage } from "@/api/client";
 
 const floatingIcons = [
   { Icon: Brain, top: "8%", left: "6%", anim: "float-drift-1", dur: "20s", size: 32, opacity: 0.12 },
@@ -193,8 +194,8 @@ const Login = () => {
     try {
       await login(email, password);
       navigate("/dashboard");
-    } catch (err: any) {
-      setError(err.response?.data?.detail || "Invalid email or password");
+    } catch (err) {
+      setError(apiErrorMessage(err, "Invalid email or password"));
     } finally {
       setLoading(false);
     }

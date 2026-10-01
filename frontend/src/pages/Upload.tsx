@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Loader2, Sparkles } from "lucide-react";
 import UploadZone from "@/components/UploadZone";
 import PipelineOverlay from "@/components/PipelineOverlay";
-import api from "@/api/client";
+import api, { apiErrorMessage } from "@/api/client";
 
 export interface PdfProgress {
   step: string;
@@ -120,8 +120,8 @@ export default function UploadPage() {
       } else {
         setPipelineComplete(true);
       }
-    } catch (err: any) {
-      setError(err.response?.data?.detail || "Analysis failed. Please try again.");
+    } catch (err) {
+      setError(apiErrorMessage(err, "Analysis failed. Please try again."));
       setUploading(false);
       setPipelineComplete(false);
     }

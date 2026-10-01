@@ -5,6 +5,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Legend,
 } from "recharts";
 import api from "@/api/client";
+import type { ResultJson, Room } from "@/types/analysis";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                               */
@@ -22,7 +23,7 @@ interface AnalysisSummary {
 }
 
 interface AnalysisDetail extends AnalysisSummary {
-  result_json: any;
+  result_json: ResultJson | null;
 }
 
 interface RoomSummary {
@@ -36,9 +37,9 @@ interface RoomSummary {
 /* ------------------------------------------------------------------ */
 
 function extractRooms(detail: AnalysisDetail): RoomSummary[] {
-  const pages: any[] = detail.result_json?.pages ?? [];
-  const allRooms: any[] = pages.flatMap((p: any) => p?.rooms ?? []);
-  return allRooms.map((r: any) => ({
+  const pages = detail.result_json?.pages ?? [];
+  const allRooms: Room[] = pages.flatMap((p) => p?.rooms ?? []);
+  return allRooms.map((r) => ({
     label: r.label ?? r.label_raw ?? "Room",
     area: r.area?.value_sqft ?? r.dimensions_parsed?.area_sqft ?? 0,
     dimensions: r.dimensions ?? null,
@@ -61,7 +62,7 @@ function countByType(rooms: RoomSummary[]): Record<string, { count: number; tota
 }
 
 function getOverlayUrl(detail: AnalysisDetail): string {
-  const overlays: any[] = detail.result_json?.overlay_images ?? [];
+  const overlays = detail.result_json?.overlay_images ?? [];
   if (overlays.length > 0) return overlays[0].url;
   return `/api/files/results/${detail.id}/result_overlay.png`;
 }

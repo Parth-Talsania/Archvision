@@ -8,6 +8,7 @@ import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import CostEstimator from "@/components/CostEstimator";
 import PropertySummary from "@/components/PropertySummary";
 import SpatialReport from "@/components/SpatialReport";
+import type { PageImage, ResultJson, ResultPage, Room } from "@/types/analysis";
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
@@ -19,7 +20,7 @@ interface AnalysisData {
   file_type: string;
   status: string;
   error_message: string | null;
-  result_json: any;
+  result_json: ResultJson | null;
   total_rooms: number | null;
   rooms_with_labels: number | null;
   rooms_with_dimensions: number | null;
@@ -171,16 +172,16 @@ export default function AnalysisView() {
   /* ---- Extract data from result_json ---- */
   const resultJson = data.result_json;
   const isPdf = data.file_type === "pdf";
-  const pages: any[] = resultJson?.pages ?? [];
+  const pages: ResultPage[] = resultJson?.pages ?? [];
   const activePage = pages[activePageIdx] ?? pages[0] ?? null;
-  const rooms: any[] = activePage?.rooms ?? resultJson?.rooms ?? [];
+  const rooms: Room[] = activePage?.rooms ?? resultJson?.rooms ?? [];
 
   // Colour legend (from backend or build client-side)
   const colorLegend: LegendItem[] = resultJson?.color_legend ?? [];
 
   // Extracted images & overlay images (PDF only)
-  const extractedImages: { page: number; url: string }[] = resultJson?.extracted_images ?? [];
-  const overlayImages: { page: number; url: string }[] = resultJson?.overlay_images ?? [];
+  const extractedImages: PageImage[] = resultJson?.extracted_images ?? [];
+  const overlayImages: PageImage[] = resultJson?.overlay_images ?? [];
 
   // Image URL for the interactive viewer
   let imageUrl = "";
@@ -203,7 +204,7 @@ export default function AnalysisView() {
     overlayUrl = overlayImages[0].url;
   }
 
-  const selectedRoom = rooms.find((r: any) => r.id === selectedRoomId) || null;
+  const selectedRoom = rooms.find((r) => r.id === selectedRoomId) || null;
 
   const handleDownload = async () => {
     try {
@@ -220,7 +221,7 @@ export default function AnalysisView() {
   };
 
   // Collect all rooms across all pages for analytics
-  const allRooms: any[] = pages.flatMap((p: any) => p?.rooms ?? []);
+  const allRooms: Room[] = pages.flatMap((p) => p?.rooms ?? []);
   if (allRooms.length === 0 && rooms.length > 0) {
     allRooms.push(...rooms);
   }
@@ -259,8 +260,8 @@ export default function AnalysisView() {
           <button
             onClick={() => {
               // Map rooms to Wi-Fi Mapper format with real dimensions
-              const imgDims = activePage?.image_dimensions ?? {};
-              const wifiRooms = rooms.map((r: any, idx: number) => ({
+              const imgDims = activePage?.image_dimensions;
+              const wifiRooms = rooms.map((r, idx) => ({
                 id: `r${r.id ?? idx}`,
                 label: r.label ?? r.label_raw ?? `Room ${idx + 1}`,
                 x: r.geometry?.centroid?.x ?? 0,
@@ -273,8 +274,8 @@ export default function AnalysisView() {
                 bbox: r.geometry?.bbox ?? null,
               }));
               const wifiMeta = {
-                image_width: imgDims.width ?? 0,
-                image_height: imgDims.height ?? 0,
+                image_width: imgDims?.width ?? 0,
+                image_height: imgDims?.height ?? 0,
               };
               localStorage.setItem("archvision_wifi_data", JSON.stringify(wifiRooms));
               localStorage.setItem("archvision_wifi_meta", JSON.stringify(wifiMeta));

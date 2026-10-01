@@ -1,27 +1,6 @@
 import { X, Ruler, Tag, Target, BarChart3 } from "lucide-react";
+import type { Room } from "@/types/analysis";
 
-interface Room {
-  id: number;
-  label: string | null;
-  dimensions: string | null;
-  dimensions_parsed: {
-    width_ft: number;
-    width_in: number;
-    height_ft: number;
-    height_in: number;
-    width_total_inches: number;
-    height_total_inches: number;
-    area_sqft: number;
-  } | null;
-  area?: { value_sqft: number | null; source: string };
-  confidence: { geometry: number; label: number; dimensions: number };
-  geometry: {
-    centroid: { x: number; y: number };
-    bbox: { x1: number; y1: number; x2: number; y2: number };
-    polygon: number[][];
-    area_pixels: number;
-  };
-}
 
 interface RoomDetailPanelProps {
   room: Room | null;

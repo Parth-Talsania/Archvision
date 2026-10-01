@@ -2,8 +2,9 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
   PieChart, Pie, Cell, Tooltip as ReTooltip, ResponsiveContainer,
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, type TooltipProps,
 } from "recharts";
+import type { Room } from "@/types/analysis";
 
 /* ================================================================== */
 /*  THEME CONSTANTS                                                    */
@@ -68,20 +69,6 @@ function useInView(threshold = 0.2) {
 /*  DATA HELPERS                                                       */
 /* ================================================================== */
 
-interface Room {
-  id: number;
-  label?: string | null;
-  label_raw?: string | null;
-  dimensions?: string | null;
-  dimensions_parsed?: {
-    width_ft?: number; width_in?: number;
-    height_ft?: number; height_in?: number;
-    area_sqft?: number;
-  } | null;
-  area?: { value_sqft?: number | null; source?: string; raw_text?: string | null } | null;
-  confidence?: { geometry?: number; label?: number; dimensions?: number } | null;
-  geometry?: { centroid?: { x: number; y: number }; bbox?: any; polygon?: number[][]; area_pixels?: number } | null;
-}
 
 type Category = "Sleeping" | "Living" | "Utility" | "Outdoor";
 
@@ -130,12 +117,12 @@ function DashboardSkeleton() {
 /*  GLASSMORPHISM CUSTOM TOOLTIP                                       */
 /* ================================================================== */
 
-function GlassTooltip({ active, payload, label }: any) {
+function GlassTooltip({ active, payload, label }: TooltipProps<number, string>) {
   if (!active || !payload?.length) return null;
   return (
     <div className="rounded-xl border border-[rgba(56,189,248,0.15)] bg-slate-900/80 px-4 py-3 shadow-2xl backdrop-blur-xl">
       {label && <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-[#94A3B8]">{label}</p>}
-      {payload.map((p: any, i: number) => (
+      {payload.map((p, i) => (
         <p key={i} className="text-sm font-bold" style={{ color: p.color || p.payload?.fill || NEON.neonCyan }}>
           {p.name}: {typeof p.value === "number" ? p.value.toLocaleString(undefined, { maximumFractionDigits: 1 }) : p.value}
           {p.payload?.unit || " sq ft"}
@@ -242,7 +229,7 @@ function DoughnutChart({ data }: { data: { name: string; value: number }[] }) {
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
   const total = data.reduce((s, d) => s + d.value, 0);
 
-  const CustomTooltip = useCallback(({ active, payload }: any) => {
+  const CustomTooltip = useCallback(({ active, payload }: TooltipProps<number, string>) => {
     if (!active || !payload?.length) return null;
     const d = payload[0];
     const pct = total ? ((d.value / total) * 100).toFixed(1) : "0";
@@ -346,7 +333,7 @@ function ArchRadarChart({ scores }: { scores: { subject: string; value: number; 
 function RoomBarsChart({ data }: { data: { name: string; area: number; fill: string }[] }) {
   const { ref, inView } = useInView(0.15);
 
-  const BarTooltip = useCallback(({ active, payload }: any) => {
+  const BarTooltip = useCallback(({ active, payload }: TooltipProps<number, string>) => {
     if (!active || !payload?.length) return null;
     const d = payload[0];
     return (

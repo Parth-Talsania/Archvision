@@ -29,3 +29,12 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+/** The API's error message (FastAPI `detail`), or a fallback. */
+export function apiErrorMessage(err: unknown, fallback: string): string {
+  if (axios.isAxiosError(err)) {
+    const detail = err.response?.data?.detail;
+    if (typeof detail === "string" && detail) return detail;
+  }
+  return fallback;
+}

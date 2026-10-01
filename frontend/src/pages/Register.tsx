@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Building2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { apiErrorMessage } from "@/api/client";
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -31,8 +32,8 @@ const Register = () => {
     try {
       await register(email, password, fullName);
       navigate("/dashboard");
-    } catch (err: any) {
-      setError(err.response?.data?.detail || "Registration failed");
+    } catch (err) {
+      setError(apiErrorMessage(err, "Registration failed"));
     } finally {
       setLoading(false);
     }

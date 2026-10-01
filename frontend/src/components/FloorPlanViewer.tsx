@@ -1,19 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ZoomIn, ZoomOut, Maximize } from "lucide-react";
+import type { Room } from "@/types/analysis";
 
-interface Room {
-  id: number;
-  label: string | null;
-  dimensions: string | null;
-  color?: string;
-  confidence: { geometry: number; label: number; dimensions: number };
-  geometry: {
-    centroid: { x: number; y: number };
-    bbox: { x1: number; y1: number; x2: number; y2: number };
-    polygon: number[][];
-    area_pixels: number;
-  };
-}
 
 interface FloorPlanViewerProps {
   imageUrl: string;

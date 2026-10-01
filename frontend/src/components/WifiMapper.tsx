@@ -8,6 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
+  type TooltipProps,
 } from "recharts";
 
 // ── Mock data representing ArchVision CV pipeline JSON output ──────────────
@@ -44,7 +45,7 @@ interface SignalEntry {
 }
 
 // ── Custom glassmorphic tooltip for Recharts ──────────────────────────────
-const SignalTooltip = ({ active, payload }: any) => {
+const SignalTooltip = ({ active, payload }: TooltipProps<number, string>) => {
   if (!active || !payload || payload.length === 0) return null;
   const entry = payload[0].payload as SignalEntry;
   const color =
