@@ -14,7 +14,7 @@ Upload a floor plan image or a property brochure PDF. ArchVision finds every roo
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-<img src="docs/screenshots/landing.png" width="900" alt="ArchVision landing page">
+<img src="docs/demo.gif" width="900" alt="Demo: upload a floor plan, watch the pipeline run, explore rooms, analytics and the Wi-Fi mapper">
 
 </div>
 
@@ -43,8 +43,8 @@ Upload a floor plan image or a property brochure PDF. ArchVision finds every roo
 | ![Segmented floor plan with a selected room and its dimensions, area and confidence](docs/screenshots/analysis_viewer.png) | ![Space allocation, architectural balance and room size charts](docs/screenshots/analysis_analytics.png) |
 | **Side-by-side plan comparison** | **Wi-Fi dead-zone mapper** |
 | ![Two analysed floor plans compared side by side](docs/screenshots/compare.png) | ![Router placed in the hall with per-room signal strength](docs/screenshots/wifi_mapper.png) |
-| **Dashboard** | |
-| ![Dashboard with analysis statistics and recent analyses](docs/screenshots/dashboard.png) | |
+| **Dashboard** | **Landing page** |
+| ![Dashboard with analysis statistics and recent analyses](docs/screenshots/dashboard.png) | ![Landing page with model metrics](docs/screenshots/landing.png) |
 
 ## 🧠 How it works
 
