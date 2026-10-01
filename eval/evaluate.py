@@ -295,6 +295,18 @@ def main() -> None:
                 pred = f"{m.pred.get('label')} · {m.pred.get('dimensions') or '-'}"
                 lines.append(f"| {plan.image} | {gt} | {pred} | {', '.join(problems)} |")
 
+    lines += [
+        "",
+        "## Experiments",
+        "",
+        "**2x upscaling before analysis** (for small, low-resolution plans): rooms found 69 -> 71,",
+        "exact dimensions 54/68 -> 57/70. It helped the two low-resolution plans (N2 1 -> 4, S15 3 -> 5)",
+        "but made E-22, N18 and W8 one room worse each, and processes 4x the pixels. Not adopted: the",
+        "net gain is within noise on 10 plans, and picking it from these same plans would be tuning",
+        "on the test set. Better OCR on low-resolution scans needs a stronger OCR model or",
+        "higher-resolution source images.",
+    ]
+
     report = "\n".join(lines) + "\n"
     (EVAL_DIR / "RESULTS.md").write_text(report, encoding="utf-8")
     print(report)

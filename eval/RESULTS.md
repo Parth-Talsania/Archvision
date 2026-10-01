@@ -54,3 +54,12 @@ fully untouched test data. Without that fix, exact dimensions were 53/67 instead
 | S15.PNG | Master Bed Room · 11'-4 1/2" x 10'-4 1/2" | Master Bed Room · 11'4" x 4'4" | dims off by 72.5" |
 | S15.PNG | Toilet · 4'-0" x 7'-0" | Toilet · - | no dimensions |
 | S15.PNG | Sit-Out · 10'-4 1/2" x 7'-4 1/2" | – | not found |
+
+## Experiments
+
+**2x upscaling before analysis** (for small, low-resolution plans): rooms found 69 -> 71,
+exact dimensions 54/68 -> 57/70. It helped the two low-resolution plans (N2 1 -> 4, S15 3 -> 5)
+but made E-22, N18 and W8 one room worse each, and processes 4x the pixels. Not adopted: the
+net gain is within noise on 10 plans, and picking it from these same plans would be tuning
+on the test set. Better OCR on low-resolution scans needs a stronger OCR model or
+higher-resolution source images.
