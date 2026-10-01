@@ -47,3 +47,42 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+
+  docker:
+    name: Docker build & smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and start (docker compose)
+        run: docker compose up --build --detach --wait
+
+      - name: Smoke test through the nginx frontend
+        run: |
+          set -e
+          curl -fsS http://localhost:8080/ | grep -q 'id="root"'
+          curl -fsS http://localhost:8080/api/health | grep -q '"ok"'
+          TOKEN=$(curl -fsS -X POST http://localhost:8080/api/auth/register \
+            -H 'Content-Type: application/json' \
+            -d '{"email":"ci@example.com","password":"secret123","full_name":"CI"}' \
+            | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')
+          JOB=$(curl -fsS -X POST http://localhost:8080/api/analyze \
+            -H "Authorization: Bearer $TOKEN" \
+            -F "file=@training/runs/floor_plan_rooms/val_batch0_labels.jpg" \
+            | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])')
+          for i in $(seq 1 60); do
+            STATUS=$(curl -fsS http://localhost:8080/api/analyses/$JOB -H "Authorization: Bearer $TOKEN" \
+              | python3 -c 'import json,sys; print(json.load(sys.stdin)["status"])')
+            echo "analysis status: $STATUS"
+            [ "$STATUS" != "processing" ] && break
+            sleep 10
+          done
+          test "$STATUS" = "completed"
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Stop
+        if: always()
+        run: docker compose down --volumes

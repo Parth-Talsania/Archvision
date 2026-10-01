@@ -1,0 +1,14 @@
+# Only the backend sources and the trained model go into the backend image.
+# Everything else (datasets, zips, virtualenvs, local data) stays out of the
+# build context.
+*
+!backend
+!pipeline
+!pdf_extract
+!models
+
+backend/uploads
+backend/results
+backend/*.db
+**/__pycache__
+**/*.pyc

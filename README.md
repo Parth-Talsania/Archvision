@@ -116,9 +116,19 @@ Most dimension errors come from two small, low-resolution scans (N2 and S15), wh
 
 ## 🚀 Quick start
 
+### Option A: Docker (one command)
+
+```bash
+docker compose up --build
+```
+
+Open <http://localhost:8080>. The first build downloads PyTorch (CPU) and takes a few minutes. The first analysis also downloads the EasyOCR models (~100 MB), which are cached in a volume. To use a fixed secret key or Google/GitHub login, copy `.env.example` to `.env` before starting.
+
+### Option B: Run locally
+
 **Prerequisites:** Python 3.10+, Node.js 18+. The trained model is included at `models/best.pt`.
 
-### 1. Backend
+#### 1. Backend
 
 ```bash
 python -m venv .venv
@@ -130,7 +140,7 @@ python -m uvicorn backend.main:app --reload --port 8000
 
 Interactive API docs: <http://127.0.0.1:8000/docs>
 
-### 2. Frontend
+#### 2. Frontend
 
 ```bash
 cd frontend
