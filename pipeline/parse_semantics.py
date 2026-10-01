@@ -26,10 +26,13 @@ def normalize_text(text: str) -> str:
     # Strip fraction-ghost characters left by EasyOCR misreading superscript ½.
     # EasyOCR turns ½ into trailing '2', 'z', ']', or '}' glued to the inch digit.
     # Pattern: a digit followed by [2z]} right before a quote, 'x', or end of string.
-    s = re.sub(r'(\d)[z\]})]\s*(?=["\u2033]|$|\s*[xX]\s)', r'\1', s)
-    # Handle the '2' ghost: digit + '2' before quote/x/end, but only when
-    # the digit-pair would be >= 12 (real inches like "12" are fine as-is).
-    s = re.sub(r'(\d)(2)\s*(?=["\u2033]|\s*[xX]\s)', _strip_ghost_2, s)
+    # The lookaheads don't consume the space before "x", which the
+    # width/height split in parse_dimensions_candidates relies on.
+    s = re.sub(r'(\d)[z\]})](?=\s*["\u2033]|\s*$|\s*[xX]\s)', r'\1', s)
+    # Handle the '2' ghost: an inch digit + '2' before an inch mark or "x",
+    # e.g. 7'-72" -> 7'-7". Only applies to inches (after a foot mark or a
+    # feet-dash), so a feet value like the "12" in "12 x 10" is left alone.
+    s = re.sub(r"((?:['\u2032]|\d\s*-)\s*-?\s*)(\d)2(?=\s*[\"\u2033]|\s*[xX]\s)", _strip_ghost_2, s)
     s = re.sub(r"\s+", " ", s).strip()
     return s
 
@@ -37,11 +40,10 @@ def normalize_text(text: str) -> str:
 def _strip_ghost_2(m: re.Match) -> str:
     """Callback for ghost-2 regex. Only strip the trailing '2' if the
     two-digit inch value would be >= 12 (impossible real inch value)."""
-    digit = m.group(1)
-    combined = int(digit + "2")
-    if combined >= 12:
-        return digit  # strip the ghost '2'
-    return m.group(0)  # keep as-is (e.g. '12' is valid)
+    prefix, digit = m.group(1), m.group(2)
+    if int(digit + "2") >= 12:
+        return prefix + digit  # strip the ghost '2'
+    return m.group(0)  # keep as-is (e.g. '02' is a valid 2 inches)
 
 
 # ---------------------------------------------------------------------------
@@ -54,28 +56,49 @@ def _strip_ghost_2(m: re.Match) -> str:
 # them across an "x" separator.  Fallback: pair the first two measurements.
 # ---------------------------------------------------------------------------
 
-# Pattern: captures feet, inches, and optional fraction
-_MEASURE_RE = re.compile(
-    r"(\d{1,2})"            # feet
+# Feet-and-inches measurement: captures feet, inches, and optional fraction.
+_FEET_INCH = (
+    r"(?P<ft>\d{1,2})"
     r"\s*['\u2032`\u2018\u2019]?\s*"  # optional apostrophe
-    r"[-\s]*"               # separator (dash, space, or nothing)
-    r"(\d{1,2})"            # inches
-    r"(?:\s*[-\s]*(\d)\s*/\s*(\d))?"  # optional fraction  N/D
-    r'\s*["\u2033\u201c\u201d]?'  # optional double-quote
+    r"[-\s]*"                         # separator (dash, space, or nothing)
+    r"(?P<inch>\d{1,2})"
+    r"(?:\s*[-\s]*(?P<fn>\d)\s*/\s*(?P<fd>\d))?"  # optional fraction  N/D
+    r'\s*["\u2033\u201c\u201d]?'      # optional double-quote
 )
+# Feet only: a foot mark with no inch digits after it, e.g. the 12' in
+# "12' x 10'6"". Without this, the pattern above splits "12'" into 1'2".
+# Limited to 1-30 ft: OCR often drops the inch mark, so a bigger value such
+# as "44'" is more likely 4'4" and is left to _FEET_INCH.
+_FEET_MARK_ONLY = r"(?<!\d)(?P<ft_only>30|[12]\d|[1-9])\s*['\u2032`\u2018\u2019](?!\s*-?\s*\d)"
+# Bare feet: a plain 1-30 number with no marks, like "12" in "12 x 10".
+# Not part of a word or decimal (e.g. the 2 in door tag "D2") and not
+# followed by inch digits (so "10 6" stays 10'6").
+_BARE_FEET = r"(?<![\w.,])(?P<ft_bare>30|[12]\d|[1-9])(?![\w.,/'\"\u2032\u2033\u201c\u201d`\u2018\u2019]|\s*-?\s*\d)"
 
-# Simpler: just feet with apostrophe, no inches
-_FEET_ONLY_RE = re.compile(r"(\d{1,2})\s*['\u2032]")
+_MEASURE_RE = re.compile(_FEET_MARK_ONLY + "|" + _FEET_INCH)
+_MEASURE_BARE_RE = re.compile(_FEET_MARK_ONLY + "|" + _BARE_FEET + "|" + _FEET_INCH)
 
 
-def _parse_measure(text: str) -> List[Tuple[int, int, int, int, int, int]]:
-    """Extract all (feet, inches, frac_num, frac_den, start, end) from text."""
+def _parse_measure(text: str, allow_bare: bool = False) -> List[Tuple[int, int, int, int, int, int]]:
+    """Extract all (feet, inches, frac_num, frac_den, start, end) from text.
+
+    ``allow_bare`` also accepts plain numbers such as the "12" in "12 x 10" as
+    feet. It is only used beside an explicit "x", because elsewhere stray
+    numbers (e.g. "Bedroom 2") would be mistaken for measurements.
+    """
     results = []
-    for m in _MEASURE_RE.finditer(text):
-        ft = int(m.group(1))
-        inch = int(m.group(2))
-        fnum = int(m.group(3)) if m.group(3) else 0
-        fden = int(m.group(4)) if m.group(4) else 1
+    pattern = _MEASURE_BARE_RE if allow_bare else _MEASURE_RE
+    for m in pattern.finditer(text):
+        groups = m.groupdict()
+        if groups["ft_only"] is not None:
+            ft, inch, fnum_s, fden_s = int(groups["ft_only"]), 0, None, None
+        elif groups.get("ft_bare") is not None:
+            ft, inch, fnum_s, fden_s = int(groups["ft_bare"]), 0, None, None
+        else:
+            ft, inch = int(groups["ft"]), int(groups["inch"])
+            fnum_s, fden_s = groups["fn"], groups["fd"]
+        fnum = int(fnum_s) if fnum_s else 0
+        fden = int(fden_s) if fden_s else 1
         if fden == 0:
             fden = 1
         # Ignore fractions -- just use whole inches for reliability.
@@ -117,8 +140,8 @@ def parse_dimensions_candidates(text: str, conf: float = 0.0) -> List[DimensionP
     if re.search(r"\s[xX]\s", norm):
         parts = re.split(r"\s[xX]\s", norm, maxsplit=1)
         if len(parts) == 2:
-            left_m = _parse_measure(parts[0])
-            right_m = _parse_measure(parts[1])
+            left_m = _parse_measure(parts[0], allow_bare=True)
+            right_m = _parse_measure(parts[1], allow_bare=True)
             if left_m and right_m:
                 lft, lin = left_m[-1][0], left_m[-1][1]  # last match (closest to x)
                 rft, rin = right_m[0][0], right_m[0][1]  # first match (closest to x)
