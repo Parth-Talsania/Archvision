@@ -100,6 +100,20 @@ YOLOv8s-seg, fine-tuned on a Roboflow floor-plan dataset (200 training images af
   <img src="training/runs/floor_plan_rooms/val_batch0_pred.jpg" width="720" alt="Validation predictions">
 </p>
 
+### End-to-end accuracy on unseen plans
+
+The full pipeline (segmentation, OCR, parsing) on 10 floor plans, 72 rooms, that the model never saw during training or validation. Each plan's room labels and printed dimensions are the ground truth:
+
+| Metric | Result |
+|---|---|
+| Rooms found | **96%** (69/72) |
+| Detections that are real rooms | **92%** (69/75) |
+| Correct room label | **99%** (68/69) |
+| Dimensions read exactly | **79%** (54/68) |
+| Median area error | **0.4%** |
+
+Most dimension errors come from two small, low-resolution scans (N2 and S15), where OCR misreads or misses the printed text. Per-plan results and every error are listed in [`eval/RESULTS.md`](eval/RESULTS.md). Reproduce with `python eval/evaluate.py`.
+
 ## 🚀 Quick start
 
 **Prerequisites:** Python 3.10+, Node.js 18+. The trained model is included at `models/best.pt`.

@@ -23,6 +23,12 @@ def normalize_text(text: str) -> str:
     s = s.replace("\u2018", "'").replace("\u2019", "'").replace("`", "'").replace("\u2032", "'")
     s = s.replace("\u201c", '"').replace("\u201d", '"').replace("\u2033", '"')
     s = s.replace("\u00d7", "x").replace("*", "x")
+    # OCR often reads the feet-inch dash as a dot: 14'.4" -> 14'-4"
+    s = re.sub(r"(\d)\s*'\s*\.\s*(?=\d)", r"\1'-", s)
+    # ...and drops the space around the "x" between two measurements:
+    # 12'-0"x10'-6" or 14'-4" x25-11" -> "... x ...". Only between a measurement
+    # end (digit or mark) and a digit, so words containing "x" are untouched.
+    s = re.sub(r"(?<=[\d'\"])\s*[xX]\s*(?=\d)", " x ", s)
     # Strip fraction-ghost characters left by EasyOCR misreading superscript ½.
     # EasyOCR turns ½ into trailing '2', 'z', ']', or '}' glued to the inch digit.
     # Pattern: a digit followed by [2z]} right before a quote, 'x', or end of string.
@@ -71,9 +77,10 @@ _FEET_INCH = (
 # as "44'" is more likely 4'4" and is left to _FEET_INCH.
 _FEET_MARK_ONLY = r"(?<!\d)(?P<ft_only>30|[12]\d|[1-9])\s*['\u2032`\u2018\u2019](?!\s*-?\s*\d)"
 # Bare feet: a plain 1-30 number with no marks, like "12" in "12 x 10".
-# Not part of a word or decimal (e.g. the 2 in door tag "D2") and not
+# Not part of a word or decimal (e.g. the 2 in door tag "D2"), not right after
+# a foot/inch mark (that digit is inches of a garbled measurement), and not
 # followed by inch digits (so "10 6" stays 10'6").
-_BARE_FEET = r"(?<![\w.,])(?P<ft_bare>30|[12]\d|[1-9])(?![\w.,/'\"\u2032\u2033\u201c\u201d`\u2018\u2019]|\s*-?\s*\d)"
+_BARE_FEET = r"(?<![\w.,'\"\u2032\u2033`\u2018\u2019])(?P<ft_bare>30|[12]\d|[1-9])(?![\w.,/'\"\u2032\u2033\u201c\u201d`\u2018\u2019]|\s*-?\s*\d)"
 
 _MEASURE_RE = re.compile(_FEET_MARK_ONLY + "|" + _FEET_INCH)
 _MEASURE_BARE_RE = re.compile(_FEET_MARK_ONLY + "|" + _BARE_FEET + "|" + _FEET_INCH)

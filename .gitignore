@@ -45,3 +45,7 @@ Thumbs.db
 
 # Local Claude Code launch config
 .claude/
+
+# Evaluation images (third-party plans, kept local)
+eval/plans/
+eval/predictions/

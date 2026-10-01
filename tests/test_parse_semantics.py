@@ -49,3 +49,12 @@ def test_ocr_noise_still_parses_as_before():
 
 def test_door_tags_are_not_read_as_dimensions():
     assert _fmt("Toilet\n4'-\"\nX\n750\"\nD2") is None
+
+
+def test_ocr_dot_and_missing_x_spacing():
+    # Real OCR line from plan E-22 (14'-4 1/2" x 25'-11"): dash read as a dot
+    # and no space after the "x".
+    assert _fmt("14'.41\" x25-11\"") == "14'4\" x 25'11\""
+    assert _fmt("12'-0\"x10'-6\"") == "12'0\" x 10'6\""
+    # A digit right after a foot mark is inches, never a standalone feet value.
+    assert _fmt("1i'4x9-7k\"") != "4'0\" x 9'7\""
