@@ -42,3 +42,6 @@ Ultralytics/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Local Claude Code launch config
+.claude/
